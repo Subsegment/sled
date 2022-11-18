@@ -1,5 +1,6 @@
 #[cfg(feature = "zstd")]
-use zstd::block::{compress, decompress};
+use zstd::stream::{copy_encode, copy_decode};
+use zstd::DEFAULT_COMPRESSION_LEVEL;
 
 use crate::*;
 
@@ -498,7 +499,10 @@ fn read_snapshot(config: &RunningConfig) -> Result<Option<Snapshot>> {
         let len_expected: u64 =
             u64::from_le_bytes(len_expected_bytes.as_ref().try_into().unwrap());
 
-        decompress(&*buf, usize::try_from(len_expected).unwrap()).unwrap()
+        let mut res = Vec::new();
+        copy_decode(&*buf, &mut res).unwrap();
+        error!("zou le zhe ge luo ji zai shot 504");
+        res
     } else {
         buf
     };
@@ -517,7 +521,10 @@ fn write_snapshot(config: &RunningConfig, snapshot: &Snapshot) -> Result<()> {
 
     #[cfg(feature = "zstd")]
     let bytes = if config.use_compression {
-        compress(&*raw_bytes, config.compression_factor).unwrap()
+        let mut bytes = Vec::new();
+        copy_encode(&*raw_bytes, &mut bytes, DEFAULT_COMPRESSION_LEVEL).unwrap();
+        error!("zou le zhe ge luo ji zai shot 526");
+        bytes
     } else {
         raw_bytes
     };

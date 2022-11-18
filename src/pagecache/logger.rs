@@ -127,14 +127,17 @@ impl Log {
         #[cfg(feature = "compression")]
         {
             if self.config.use_compression && pid != BATCH_MANIFEST_PID {
-                use zstd::block::compress;
+                use zstd;
+                use zstd::DEFAULT_COMPRESSION_LEVEL;
 
                 let buf = item.serialize();
 
                 let _measure = Measure::new(&M.compress);
 
-                let compressed_buf =
-                    compress(&buf, self.config.compression_factor).unwrap();
+                // error!("before : {}", buf.len());
+                let mut compressed_buf = Vec::new() ;
+                zstd::stream::copy_encode(&*buf, &mut compressed_buf, DEFAULT_COMPRESSION_LEVEL).unwrap();
+                // error!("after :{}", compressed_buf.len());
 
                 return self.reserve_inner(
                     log_kind,
